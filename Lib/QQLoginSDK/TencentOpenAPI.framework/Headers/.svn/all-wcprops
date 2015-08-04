@@ -1,0 +1,35 @@
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/svn/walkontime/!svn/ver/39/WalkOnTime/WalkOnTime/Lib/QQLoginSDK/TencentOpenAPI.framework/Headers
+END
+QQApiInterface.h
+K 25
+svn:wc:ra_dav:version-url
+V 114
+/svn/walkontime/!svn/ver/39/WalkOnTime/WalkOnTime/Lib/QQLoginSDK/TencentOpenAPI.framework/Headers/QQApiInterface.h
+END
+sdkdef.h
+K 25
+svn:wc:ra_dav:version-url
+V 106
+/svn/walkontime/!svn/ver/39/WalkOnTime/WalkOnTime/Lib/QQLoginSDK/TencentOpenAPI.framework/Headers/sdkdef.h
+END
+TencentOAuth.h
+K 25
+svn:wc:ra_dav:version-url
+V 112
+/svn/walkontime/!svn/ver/39/WalkOnTime/WalkOnTime/Lib/QQLoginSDK/TencentOpenAPI.framework/Headers/TencentOAuth.h
+END
+QQApiInterfaceObject.h
+K 25
+svn:wc:ra_dav:version-url
+V 120
+/svn/walkontime/!svn/ver/39/WalkOnTime/WalkOnTime/Lib/QQLoginSDK/TencentOpenAPI.framework/Headers/QQApiInterfaceObject.h
+END
+TencentOAuthObject.h
+K 25
+svn:wc:ra_dav:version-url
+V 118
+/svn/walkontime/!svn/ver/39/WalkOnTime/WalkOnTime/Lib/QQLoginSDK/TencentOpenAPI.framework/Headers/TencentOAuthObject.h
+END

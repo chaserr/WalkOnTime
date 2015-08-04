@@ -1,0 +1,54 @@
+//
+//  TXPhotoDetailViewController.m
+//  WalkOnTime
+//
+//  Created by lanou3g on 15/7/13.
+//  Copyright (c) 2015年 朝夕. All rights reserved.
+//
+
+#import "TXPhotoDetailViewController.h"
+
+@interface TXPhotoDetailViewController ()<UIWebViewDelegate>
+
+@end
+
+@implementation TXPhotoDetailViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    
+    self.view.backgroundColor = [UIColor whiteColor];
+    self.title = self.txPhotoModel.subject_collection.name;
+    
+    // 初始化webview
+    self.webView = [[UIWebView alloc] initWithFrame:self.view.frame];
+    _webView.delegate = self;
+    [self.view addSubview:_webView];
+    
+    // 创建Url对象
+    NSURL *url = [NSURL URLWithString:self.detailWithUrl];
+    
+    [self.webView loadRequest:[NSURLRequest requestWithURL:url]];
+    
+    
+
+}
+
+
+
+- (void)webView:(UIWebView *)webView didFailLoadWithError:(NSError *)error{
+
+    // 让刷新控件停止显示刷新状态
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        
+        [SVProgressHUD showErrorWithStatus:@"网络繁忙, 请稍后再试" duration:1.5];
+        
+    });
+}
+- (void)didReceiveMemoryWarning {
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+
+@end

@@ -1,0 +1,467 @@
+//
+//  LoginViewController.m
+//  WalkOnTime
+//
+//  Created by lanou3g on 15/7/10.
+//  Copyright (c) 2015年 朝夕. All rights reserved.
+//
+
+#import "LoginViewController.h"
+#import "LoginView.h"
+#import "TXMainViewController.h"
+#import "AppDelegate.h"
+#import "RegisterViewController.h"
+#import "SustainManage.h"
+#import "ForgetPasswordViewController.h"
+#import "NSString+Password.h"
+#import "SVProgressHUD.h"
+#import "UIImage+TX.h"
+#import "QCheckBox.h"
+#import "TXOauthController.h"
+#import <TencentOpenAPI/QQApiInterface.h>
+#import <TencentOpenAPI/TencentOAuth.h>
+#import <TencentOpenAPI/sdkdef.h>
+
+@interface LoginViewController ()<UIAlertViewDelegate,QCheckBoxDelegate,TencentSessionDelegate>
+@property(nonatomic, strong) UITextField *emailTF;
+@property(nonatomic, strong) UITextField *passWordTF;
+@property(nonatomic, strong) UIButton *forgetPassWord;
+@property(nonatomic, strong) QCheckBox *rememberPassWord;
+@property(nonatomic, strong) UIButton *loginBtn;
+@property(nonatomic, strong) UILabel *cooperationLabel;
+@property(nonatomic, strong) UIImageView *cooperationView;
+@property(nonatomic, strong) UIButton *thirdPartyLoginBtn;
+@property(nonatomic, strong) LoginView *backGround;
+@property(nonatomic, strong) UIImageView *img1;
+@property (nonatomic, strong) NSArray *arrayOfThirdLogin;
+
+
+// QQ登录
+@property (nonatomic, strong) TencentOAuth *tencentOAuth;
+@property (nonatomic, strong) NSArray *permissions;
+@property (nonatomic, strong) UILabel *resultLable;
+@property (nonatomic, strong) UILabel *tokenLable;
+@property (nonatomic, strong) UIButton *qqLoginBtn;
+@property (nonatomic, strong) UIImageView *imgViewLogin;
+@property (nonatomic, strong) APIResponse *respond;
+
+@end
+
+
+
+
+@implementation LoginViewController
+
+
+static LoginViewController *loginVC = nil;
+
++ (LoginViewController *)shareInstance{
+    
+    if (loginVC == nil) {
+        loginVC = [[LoginViewController alloc] init];
+    }
+    
+    return loginVC;
+}
+
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+    self.view.backgroundColor = [UIColor colorWithRed:0.618 green:0.927 blue:1.000 alpha:1.000];
+    
+    [self layoutView];
+    //返回
+    UIBarButtonItem *back = [[UIBarButtonItem alloc] initWithTitle:@"返回" style:UIBarButtonItemStyleDone target:self action:@selector(backToView)];
+    self.navigationItem.leftBarButtonItem = back;
+    //注册
+    UIBarButtonItem *regis = [[UIBarButtonItem alloc] initWithTitle:@"注册" style:UIBarButtonItemStyleDone target:self action:@selector(gotoRegistView)];
+    self.navigationItem.rightBarButtonItem = regis;
+    
+    
+    // QQ登录
+    //1. 初始化TencentOAuth 对象 appid来自应用宝创建的应用， deletegate设置为self  一定记得实现代理方法
+    self.tencentOAuth=[[TencentOAuth alloc] initWithAppId:@"1104778514" andDelegate:self];
+    
+    self.tencentOAuth.sessionDelegate = self;
+    //2. 设置需要的权限列表，此处尽量使用什么取什么。
+    self.permissions= [NSArray arrayWithObjects:@"get_user_info", @"get_simple_userinfo", @"add_t", nil];
+    
+}
+
+#pragma mark - 返回首页
+- (void)backToView
+{
+//    TXLog(@"返回首页");
+    TXMainViewController *mainVC = [TXMainViewController shareInstance];
+////    TXLog(@"在登录注册里创建的:LoginViewController:%p",mainVC);
+   TXNavigationController *nv = [[TXNavigationController alloc] initWithRootViewController:mainVC];
+   AppDelegate *app = [UIApplication sharedApplication].delegate;
+    app.slider.rootViewController = nv;
+    [self.navigationController popToRootViewControllerAnimated:YES];
+    
+   // [self.navigationController popToRootViewControllerAnimated:YES];
+}
+
+#pragma mark - 跳转注册页面
+- (void)gotoRegistView
+{
+    TXLog(@"进入注册页面");
+    
+    RegisterViewController *registerVC = [[RegisterViewController alloc] init];
+    registerVC.view.backgroundColor = [UIColor colorWithRed:0.618 green:0.927 blue:1.000 alpha:1.000];
+    [self.navigationController pushViewController:registerVC animated:YES];
+
+}
+#pragma mark - 布局登录界面
+- (void)layoutView
+{
+   // [self.view setBackgroundColor:[UIColor blueColor]];
+    
+    self.backGround = [[LoginView alloc] initWithFrame:CGRectMake(20, SCREEN_HEIGHT / 5, SCREEN_WIDTH - 40, SCREEN_HEIGHT/ 12 * 2 + 20)];
+    [_backGround setBackgroundColor:[UIColor whiteColor]];
+    [[_backGround layer] setCornerRadius:5];
+    [[_backGround layer] setMasksToBounds:YES];
+    [self.view addSubview:_backGround];
+    
+    
+    
+    self.emailTF = [[UITextField alloc] initWithFrame:CGRectMake(10, 0, SCREEN_WIDTH - 40, SCREEN_HEIGHT / 12)];
+    _emailTF.backgroundColor = [UIColor clearColor];
+    _emailTF.layer.cornerRadius = 5.0;
+    _emailTF.placeholder = [NSString stringWithFormat:@"用户名/邮箱"];
+    [_emailTF setKeyboardType:UIKeyboardTypeEmailAddress];
+   // [self.view addSubview:_emailTF];
+    [_backGround addSubview:_emailTF];
+    
+    self.passWordTF = [[UITextField alloc] initWithFrame:CGRectMake(10, CGRectGetMaxY(_emailTF.frame), SCREEN_WIDTH - 40, SCREEN_HEIGHT / 12)];
+    _passWordTF.layer.cornerRadius = 5.0;
+    _passWordTF.backgroundColor = [UIColor clearColor];
+    _passWordTF.placeholder = [NSString stringWithFormat:@"密码"];
+    _passWordTF.secureTextEntry = YES;
+  // [self.view addSubview:_passWorkTH];
+   [_backGround addSubview:_passWordTF];
+    
+    
+    //忘记密码
+    self.forgetPassWord = [UIButton buttonWithType:UIButtonTypeCustom];
+    _forgetPassWord.frame = CGRectMake(SCREEN_WIDTH / 7 * 5, CGRectGetMaxY(_backGround.frame)+10 , 80, 30);
+    _forgetPassWord.titleLabel.font = kTypeLabelFont;
+    _forgetPassWord.titleLabel.textColor = [UIColor blackColor];
+    [_forgetPassWord setTitleColor:[UIColor blackColor] forState:(UIControlStateNormal)];
+  //  _forgetPassWord.backgroundColor = [UIColor blackColor];
+    [_forgetPassWord setTitle:@"忘记密码" forState:UIControlStateNormal];
+    [_forgetPassWord addTarget:self action:@selector(forgetPassWordView) forControlEvents:UIControlEventTouchUpInside];
+    [self.view addSubview:_forgetPassWord];
+    
+    // 自动登录
+    self.rememberPassWord = [[QCheckBox alloc] initWithDelegate:self];
+    _rememberPassWord.frame = CGRectMake(SCREEN_WIDTH / 7, CGRectGetMaxY(_backGround.frame)+10 , 80, 30);
+    _rememberPassWord.titleLabel.font = kTypeLabelFont;
+    
+    // 设置默认为选中状态
+    [_rememberPassWord setChecked:NO];
+    _rememberPassWord.titleLabel.textColor = [UIColor blackColor];
+    [_rememberPassWord setTitleColor:[UIColor blackColor] forState:(UIControlStateNormal)];
+    //  _forgetPassWord.backgroundColor = [UIColor blackColor];
+    [_rememberPassWord setTitle:@"自动登录" forState:UIControlStateNormal];
+    [self.view addSubview:_rememberPassWord];
+    
+    
+    
+    
+  //  self.loginBtn = [UIButton buttonWithType:UIButtonTypeCustom];
+    self.loginBtn = [UIButton buttonWithType:UIButtonTypeRoundedRect];
+    _loginBtn.frame = CGRectMake(20, SCREEN_HEIGHT / 4 * 2, SCREEN_WIDTH - 40, SCREEN_HEIGHT / 12);
+    [_loginBtn setTitle:@"登录" forState:UIControlStateNormal];
+    [_loginBtn setBackgroundColor:[UIColor colorWithRed:0.992 green:0.992 blue:1.000 alpha:1.000]];
+    _loginBtn.layer.cornerRadius = 5.0;
+   // [_loginBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    [_loginBtn addTarget:self action:@selector(loginView) forControlEvents:UIControlEventTouchUpInside];
+    [self.view addSubview:_loginBtn];
+    
+
+    //合作
+    self.img1 = [[UIImageView alloc] initWithFrame:CGRectMake(40 , SCREEN_HEIGHT - 200, SCREEN_WIDTH - 80, 20)];
+    _img1.backgroundColor = [UIColor clearColor];
+    [self.view addSubview:_img1];
+    
+    UIImageView *img2 = [[UIImageView alloc] initWithFrame:CGRectMake(0 ,9.5, CGRectGetWidth(_img1.frame) / 3, 1)];
+    img2.image = [UIImage imageNamed:@"spinner_line"];
+    [_img1 addSubview:img2];
+    
+    self.cooperationLabel = [[UILabel alloc] initWithFrame:CGRectMake(CGRectGetWidth(_img1.frame) / 3, 0, CGRectGetWidth(_img1.frame) / 3, 20)];
+    
+    _cooperationLabel.text = @"合作网站登录";
+    _cooperationLabel.font = kRadioTitleFont;
+    _cooperationLabel.backgroundColor = [UIColor colorWithRed:0.872 green:0.162 blue:0.911 alpha:0.000];
+    _cooperationLabel.textAlignment = NSTextAlignmentCenter;
+    [_img1 addSubview:_cooperationLabel];
+    
+    UIImageView *img3 = [[UIImageView alloc] initWithFrame:CGRectMake(CGRectGetWidth(_img1.frame) / 3 *2 , 9.5, CGRectGetWidth(_img1.frame) / 3, 1)];
+    img3.image = [UIImage imageNamed:@"spinner_line"];
+    [_img1 addSubview:img3];
+    
+
+    
+    // 第三方授权
+    self.arrayOfThirdLogin = @[@"ic_activity_sina_logo", @"ic_activity_qq_logo"];
+    
+    
+        //自定义继续UIButton的UIImageButton 里面只是加了2个row和column属性
+        for (int i = 0; i<2; i++) {//列
+                UIImageView *loginIcon = [[UIImageView alloc] init];
+                loginIcon.backgroundColor = [UIColor clearColor];
+            CGFloat margen = 20;
+            CGFloat itemWH = 30;
+            CGFloat allItemW = (margen+itemWH)+itemWH;
+                loginIcon.frame = CGRectMake(i*(itemWH+margen)+(SCREEN_WIDTH - allItemW)*0.5, SCREEN_HEIGHT - 150, itemWH, itemWH);
+            loginIcon.image = [UIImage imageNamed:_arrayOfThirdLogin[i]];
+            loginIcon.accessibilityIdentifier = _arrayOfThirdLogin[i];
+            [self.view addSubview:loginIcon];
+            loginIcon.userInteractionEnabled = YES;
+            // 添加手势
+            UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(thirdLogin:)];
+            [loginIcon addGestureRecognizer:tapGesture];
+            
+    }
+
+    
+    
+    
+}
+
+#pragma mark - 忘记密码点击事件
+- (void)forgetPassWordView
+{
+    TXLog(@"找回密码");
+    ForgetPasswordViewController *forgetView = [[ForgetPasswordViewController alloc] init];
+    TXNavigationController *na = [[TXNavigationController alloc] initWithRootViewController:forgetView];
+    [self presentViewController:na animated:YES completion:^{
+        
+    }];
+
+}
+
+#pragma mark -- 记住密码
+- (void)didSelectedCheckBox:(QCheckBox *)checkbox checked:(BOOL)checked{
+
+    // 记住密码
+    if (checked) {
+        [[SustainManage shareInstance] setRememberPasswordState:YES];
+        [[SustainManage shareInstance] synchronized];
+    }else{
+    
+        [[SustainManage shareInstance] setRememberPasswordState:NO];
+        [[SustainManage shareInstance] synchronized];
+    }
+    
+    
+}
+
+#pragma mark - 登录点击事件
+- (void)loginView
+{
+
+    TXLog(@"正在登录");
+    
+    if (_emailTF.text == nil || _passWordTF.text == nil || [_emailTF.text isEqualToString:@""] || [_passWordTF.text isEqualToString:@""]) {
+        
+        UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"信息不完整" message:nil delegate:self cancelButtonTitle:@"取消" otherButtonTitles: nil];
+        [alertView show];
+    }else{
+             NSString *name = self.emailTF.text;
+        NSString *pwd = [self.passWordTF.text MD5];
+    TXLog(@"登录用户名：%@====密码%@", name, pwd);
+             NSString *userName = [[SustainManage shareInstance] userName];
+             NSString *passWord = [[SustainManage shareInstance] passWord];
+             NSString *email = [[SustainManage shareInstance] email];
+        TXLog(@"注册用户:__用户名%@,____密码:%@,____邮箱%@", userName,passWord,email);
+    
+             if (([userName isEqualToString:name]|[email isEqualToString:name]) && [passWord isEqualToString:pwd] ) {
+                 
+                 //修改登录状态
+                 [[SustainManage shareInstance] setUserLoginState:YES];
+                 [[SustainManage shareInstance] synchronized];
+                 
+                 // 回调
+#warning 当用户在注册的时候没有添加用户图像的时候,此处的userIcon不会默认为nil,会crash
+                 self.successBlock([[SustainManage shareInstance] userIcon], userName);
+                 self.successBlock_collect(nil,userName);
+                 // 模拟服务器请求登录
+                 [SVProgressHUD showWithStatus:@"正在拼命加载"];
+                 dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                     [SVProgressHUD dismiss];
+                     
+                     TXMainViewController *firstVC = [TXMainViewController shareInstance];
+                     TXNavigationController *nv = [[TXNavigationController alloc] initWithRootViewController:firstVC];
+                     AppDelegate *app = [UIApplication sharedApplication].delegate;
+                     app.slider.rootViewController = nv;
+                     [self presentViewController:nv animated:YES completion:nil];
+                     
+                 });
+        }
+        if (! [userName isEqualToString:name])
+        {
+        
+            UIAlertView *alertView =[[UIAlertView alloc] initWithTitle:@"用户不存在" message:@"请先注册" delegate:self cancelButtonTitle:@"取消" otherButtonTitles: nil];
+            [alertView show];
+            
+        }
+        if(! [passWord isEqualToString:pwd] && ([userName isEqualToString:name]|[email isEqualToString:name]))
+        {
+            UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"密码错误" message:nil delegate:self cancelButtonTitle:@"取消" otherButtonTitles: nil];
+            [alertView show];
+        }
+    
+    }
+    
+}
+
+- (void)didReceiveMemoryWarning {
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+#pragma mark -- 第三方登录
+- (void)thirdLogin:(UITapGestureRecognizer *)tapGesture{
+    
+    TXLog(@"第三方登录");
+    
+    if([tapGesture.view.accessibilityIdentifier isEqualToString:@"ic_activity_sina_logo"]){
+    
+        TXLog(@"使用新浪账号登录");
+        TXOauthController *txOauthVC = [[TXOauthController alloc] init];
+//        TXNavigationController *nv = [[TXNavigationController alloc] initWithRootViewController:txOauthVC];
+        [self.navigationController pushViewController:txOauthVC animated:YES];
+        
+    }
+    
+    else if([tapGesture.view.accessibilityIdentifier isEqualToString:@"ic_activity_qq_logo"]){
+    
+        TXLog(@"使用QQ账号登录");
+
+        NSLog(@"loginAct");
+        [_tencentOAuth authorize:_permissions inSafari:NO];
+
+        
+    }
+//    else if ([tapGesture.view.accessibilityIdentifier isEqualToString:@"ic_activity_renren_logo"]){
+//    
+//        TXLog(@"使用人人网账号登录");
+//    }
+//    else if([tapGesture.view.accessibilityIdentifier isEqualToString:@"ic_activity_douban_logo"]){
+//    
+//        TXLog(@"使用豆瓣账号登录");
+//    }
+    
+    
+}
+
+
+
+
+#pragma mark -- TencentSessionDelegate
+
+- (void)getUserInfoResponse:(APIResponse *)response{
+
+    TXLog(@"返回信息:%@", response.jsonResponse);
+    TXLog(@"用户昵称:%@", [response.jsonResponse objectForKey:@"nickname"]);
+    NSString *username = [response.jsonResponse objectForKey:@"nickname"];
+    // 获取到用户图像
+    TXLog(@"用户图像地址:%@", [response.jsonResponse objectForKey:@"figureurl_qq_2"]);
+    NSString *iconUrlString = [response.jsonResponse objectForKey:@"figureurl_qq_2"];
+
+    [[SustainManage shareInstance] setUserName:username];
+    [[SustainManage shareInstance] synchronized];
+    
+    self.userInfo_QQ_Block(username, iconUrlString);
+    
+    // 切换窗口的根控制器
+
+  
+        
+   
+    
+    
+    
+}
+
+
+
+
+//登陆完成调用
+- (void)tencentDidLogin
+{
+    TXLog(@"登录完成");
+    
+    if (_tencentOAuth.accessToken && 0 != [_tencentOAuth.accessToken length])
+    {
+        //  记录登录用户的OpenID、Token以及过期时间
+        TXLog(@"accessToken:%@", _tencentOAuth.accessToken);
+        TXLog(@"openId:%@", _tencentOAuth.openId);
+        TXLog(@"expirationDate:%@", _tencentOAuth.expirationDate);
+
+        [self.tencentOAuth getUserInfo];
+        
+        // 设置登录状态
+        [[SustainManage shareInstance] setUserLoginState:YES];
+        [[SustainManage shareInstance] synchronized];
+        
+        TXMainViewController *firstVC = [TXMainViewController shareInstance];
+        TXNavigationController *nv = [[TXNavigationController alloc] initWithRootViewController:firstVC];
+        AppDelegate *app = [UIApplication sharedApplication].delegate;
+        app.slider.rootViewController = nv;
+        [self presentViewController:nv animated:YES completion:nil];
+    }
+    else
+    {
+//        TXLog(@"登录不成功 没有获取accesstoken");
+        
+        
+    }
+}
+
+// 网络错误导致登录失败
+-(void)tencentDidNotNetWork
+{
+    
+    TXLog(@"tencentDidNotNetWork");
+    TXLog(@"无网络连接，请设置网络");
+    [SVProgressHUD showErrorWithStatus:@"没有网络,请稍后再试"];
+}
+
+- (void)tencentDidNotLogin:(BOOL)cancelled{
+
+    if (cancelled) {
+        TXLog(@"用户取消登录");
+    }
+    else{
+    
+        TXLog(@"登录失败");
+    }
+}
+
+
+
+// 得到用户的昵称
+
+
+
+#pragma mark - 回收键盘
+- (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
+{
+
+    [self.view endEditing:YES];
+}
+/*
+#pragma mark - Navigation
+
+// In a storyboard-based application, you will often want to do a little preparation before navigation
+- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
+    // Get the new view controller using [segue destinationViewController].
+    // Pass the selected object to the new view controller.
+}
+*/
+
+@end

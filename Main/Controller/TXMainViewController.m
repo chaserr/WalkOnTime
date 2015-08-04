@@ -1,0 +1,585 @@
+//
+//  MainViewController.m
+//  SlideZoomMenuDemo
+//
+//  Created by renxiaojian on 15/4/8.
+//  Copyright (c) 2015年 renxiaojian. All rights reserved.
+//
+
+#import "TXMainViewController.h"
+#import "TXMainListDetailViewController.h"
+#import "SDCycleScrollView.h"
+#import "TXMainableViewCell.h"
+#import "AFNetworking.h"
+#import "TXMainViewList.h"
+#import "MJRefresh.h"
+#import "DataBaseHandle.h"
+#import "CyclePictureDetailViewController.h"
+#import "AFSoundManager.h"
+#import "UIImage+MJ.h"
+@interface TXMainViewController ()<UITableViewDataSource,UITableViewDelegate,SDCycleScrollViewDelegate,MJRefreshBaseViewDelegate,UIWebViewDelegate>
+@property (nonatomic, weak) MJRefreshFooterView *footer;
+@property (nonatomic, weak) MJRefreshHeaderView *header;
+@property(nonatomic, strong) UITableView *tableView;
+@property (nonatomic, strong) NSMutableArray *cycleScrollePictureUrl; // 轮播图图片数组
+@property (nonatomic, strong) SDCycleScrollView *cycleScrollView2;
+@property (nonatomic, strong) NSMutableArray *listArray;
+@property (nonatomic, strong) UIWebView *webView;
+@property (nonatomic, strong) UIImageView *jingImageView;
+@property (nonatomic, strong) UIImageView *jingImageView_close;
+@property (nonatomic, strong) DataBaseHandle *dataBaseHnadle;
+@property (nonatomic, strong) NSData *newdata;
+@property (nonatomic, copy) NSString *stringWithData;
+@end
+
+@implementation TXMainViewController
+
+static TXMainViewController *txMianVC = nil;
+
++ (TXMainViewController *)shareInstance{
+
+    @synchronized(self){
+    
+        if (txMianVC == nil) {
+            txMianVC = [[TXMainViewController alloc] init];
+        }
+    }
+    return txMianVC;
+}
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    self.newdata = [NSData data];
+    self.dataBaseHnadle = [DataBaseHandle sharedDataBaseHandle];
+    
+    // 监测网络
+    [[AFNetworkReachabilityManager sharedManager] startMonitoring];
+    
+    // 检测网络连接的单例,网络变化时的回调方法
+    [[AFNetworkReachabilityManager sharedManager] setReachabilityStatusChangeBlock:^(AFNetworkReachabilityStatus status) {
+
+        if (status <= 0) {
+            // 从数据库加载
+            NSArray *array = [self.dataBaseHnadle resoreTxMainViewList];
+            self.listArray = [NSMutableArray arrayWithArray:array];
+            [self.tableView reloadData];
+        }else{
+            // 有网从网络加载
+            [self reuestCycleScrolle];
+        }
+        
+    }];
+    
+    self.navigationItem.title = @"首页";
+  
+    // 创建tableView
+    [self layoutTableView];
+
+    // 集成刷新控件
+    [self setupRefreshView];
+    
+//    // 静静页面
+//    UIImageView *jingImageView = [[UIImageView alloc] initWithFrame:CGRectMake(SCREEN_WIDTH - 50, SCREEN_HEIGHT - 104, 40, 40)];
+//    jingImageView.image = [UIImage imageNamed:@"ic_quite"];
+//    jingImageView.layer.cornerRadius = 20;
+//    jingImageView.layer.masksToBounds = YES;
+//    jingImageView.userInteractionEnabled = YES;
+//    UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(clickJingImgView:)];
+//    [jingImageView addGestureRecognizer:tapGesture];
+//    self.jingImageView = jingImageView;
+//    self.view.backgroundColor = [UIColor clearColor];
+//    [self.view addSubview:_jingImageView];
+//    [self.view bringSubviewToFront:_jingImageView];
+    
+    
+}
+
+
+#pragma mark -- 创建tableView
+- (void)layoutTableView{
+    
+    CGFloat tableX = 0;
+    CGFloat tableY = 0;
+    CGFloat tableW = SCREEN_WIDTH;
+    CGFloat tableH = SCREEN_HEIGHT-tableY;
+    UITableView *tableView = [[UITableView alloc] initWithFrame:CGRectMake(tableX, tableY, tableW, tableH) style:(UITableViewStylePlain)];
+    tableView.backgroundColor = [UIColor whiteColor];
+    tableView.delegate = self;
+    tableView.dataSource = self;
+    tableView.showsVerticalScrollIndicator = NO;
+    self.tableView = tableView;
+    [self.view addSubview:tableView];
+}
+
+#pragma mark -- tableViewDelegate
+
+// 分区数
+- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView{
+    
+    return 1;
+}
+
+// 行数
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+//    return 3;
+    return _listArray.count;
+}
+
+// 行高
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+
+    // 计算cell高度
+    TXMainViewList *txMainList = _listArray[indexPath.row];
+   
+    CGFloat contengHeight = [TXMainableViewCell heightForString:txMainList.content];
+    
+
+    
+    return 320+contengHeight+45;
+    
+//    return 400;
+    
+}
+
+// 绘制cell
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    TXMainViewList *txMainList = _listArray[indexPath.row];
+    
+    static NSString *mainCellIdentifier = @"BookCell";
+    TXMainableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:mainCellIdentifier];
+    if (cell == nil) {
+            
+        }
+    cell = [[TXMainableViewCell alloc] initWithStyle:(UITableViewCellStyleDefault) reuseIdentifier:mainCellIdentifier];
+    
+    cell.txMainList = txMainList;
+    
+    cell.selectionStyle = UITableViewCellSelectionStyleNone;
+
+    return cell;
+
+}
+
+
+//选中cell
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    TXMainListDetailViewController *nextVC = [TXMainListDetailViewController new];
+    TXMainViewList *txMianList = _listArray[indexPath.row];
+
+//    if ([txMianList.enname isEqualToString:@"Sound"]) {
+//        TXLog(@"播放");
+//        
+//    }
+//    else{
+    
+        nextVC.txMainList = txMianList;
+        [self.navigationController pushViewController:nextVC animated:YES];
+//    }
+
+    
+}
+
+
+#pragma mark -- 轮播图和首页列表数据请求
+- (void)reuestCycleScrolle{
+
+    NSString *bodyString = @"start=0&client=2&limit=10";
+    
+    NSMutableURLRequest *mutableRequest = [self requestWithUrl:homeUrlHead method:@"POST" bodyString:bodyString];
+
+    // 使用block进行网络请求
+    [NSURLConnection sendAsynchronousRequest:mutableRequest queue:[NSOperationQueue mainQueue] completionHandler:^(NSURLResponse *response, NSData *data, NSError *connectionError) {
+        if (data) {
+            self.newdata = data;
+//            TXLog(@">>>>%@", _newdata);
+            NSLog(@">>>%p_____%p", _newdata, data);
+            NSDictionary *responseDict = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:nil];
+            //        TXLog(@"请求成功>>>>%@", responseDict[@"data"]);
+            NSDictionary *dataDict = responseDict[@"data"];
+            NSArray *carouselArray = dataDict[@"carousel"];
+            
+            // 遍历轮播图片
+            for (NSDictionary *dict in carouselArray) {
+                [self.cycleScrollePictureUrl addObject:dict[@"img"]];
+                //            TXLog(@"图片Url:%@",_cycleScrollePictureUrl);
+            }
+#pragma mark -- 设置顶部轮播图
+            // 请求完成设置轮播图
+            // 设置headView轮播图
+            [self cyclePicture];
+            
+            
+#pragma mark -- 设置主页列表
+            
+            NSArray *listArray = dataDict[@"list"];
+            //        TXLog(@"listArray个数:%ld", [listArray count]);
+            NSMutableArray *tmpArray = [NSMutableArray array];
+            for (NSDictionary *dict in listArray) {
+                if ([dict[@"enname"] isEqualToString:@"Music"]) {
+                    continue; // 如果是music类型跳出本次循环
+                }
+                TXMainViewList *txMainViewList = [TXMainViewList txMainViewListWithDictionary:dict];
+                [tmpArray addObject:txMainViewList];
+                
+                // 保存到数据库
+                [self.dataBaseHnadle saveNewTXMainViewList:txMainViewList];
+                
+            }
+            
+            [_listArray addObjectsFromArray:tmpArray];
+            
+            [self.tableView reloadData];
+        }
+
+        
+        else{
+            
+            // 让刷新控件停止显示刷新状态
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                
+                [self.header endRefreshing];
+                TXLog(@"connectionError%@", connectionError);
+                [SVProgressHUD showErrorWithStatus:@"网络繁忙, 请稍后再试" duration:1];
+                
+            });
+            
+        }
+
+    }];
+    // 数据请求结束
+    
+    
+    
+    
+    
+}
+
+#pragma mark -- 顶部轮播图
+- (void)cyclePicture{
+    
+    NSArray *titles = @[@"行走·时光",
+                        @"世界那么大,我们都想去看看",
+                        @"带着心",
+                        @"享受行走",
+                        @"享受时光",
+                        @"让我们一起"
+                        ];
+     CGFloat w = self.view.bounds.size.width;
+    //网络加载 --- 创建带标题的图片轮播器
+    SDCycleScrollView *cycleScrollView2 = [SDCycleScrollView cycleScrollViewWithFrame:CGRectMake(0, 64, w, SCREEN_HEIGHT/4) imageURLStringsGroup:_cycleScrollePictureUrl]; // 模拟网络延时情景
+    cycleScrollView2.pageControlAliment = SDCycleScrollViewPageContolAlimentRight;
+    cycleScrollView2.delegate = self;
+    cycleScrollView2.titlesGroup = titles;
+    cycleScrollView2.dotColor = [UIColor whiteColor]; // 自定义分页控件小圆标颜色
+    cycleScrollView2.placeholderImage = [UIImage imageNamed:@"placeholder"];
+    //         --- 轮播时间间隔，默认1.0秒，可自定义
+    cycleScrollView2.autoScrollTimeInterval = 3.0;
+    self.tableView.tableHeaderView = cycleScrollView2;
+
+}
+
+
+#pragma mark - SDCycleScrollViewDelegate 点击图片进入相应的详情页
+
+- (void)cycleScrollView:(SDCycleScrollView *)cycleScrollView didSelectItemAtIndex:(NSInteger)index
+{
+    TXLog(@"---点击了第%ld张图片", (long)index);
+}
+
+#pragma mark -- 刷新
+- (void)setupRefreshView
+{
+//     下拉刷新
+    MJRefreshHeaderView *headView = [MJRefreshHeaderView header];
+    headView.scrollView = self.tableView;
+    headView.delegate = self;
+    // 自动进入刷新状态
+    [headView beginRefreshing];
+    self.header = headView;
+    
+//   上拉加载更多数据
+    MJRefreshFooterView *footer = [MJRefreshFooterView footer];
+    footer.scrollView = self.tableView;
+    footer.delegate = self;
+    self.footer = footer;
+}
+
+#pragma mark -- 上拉加载下拉刷新delegate
+- (void)refreshViewBeginRefreshing:(MJRefreshBaseView *)refreshView{
+    
+    if ([refreshView isKindOfClass:[MJRefreshFooterView class]]) { // 上拉刷新
+        [self loadMoreData];
+    }else{ // 下拉刷新
+        [self loadNewData];
+    }
+}
+
+// 下拉刷新
+- (void)loadNewData{
+    
+    self.listArray = nil;
+    TXLog(@">>>>>>%ld", _listArray.count);
+    
+    NSString *bodyString = @"start=0&client=2&limit=10";
+    
+    NSMutableURLRequest *mutableRequest = [self requestWithUrl:homeUrlHead method:@"POST" bodyString:bodyString];
+    
+    // 使用block进行网络请求
+    [NSURLConnection sendAsynchronousRequest:mutableRequest queue:[NSOperationQueue mainQueue] completionHandler:^(NSURLResponse *response, NSData *data, NSError *connectionError) {
+        
+        NSError *error;
+
+        if (data) {
+ 
+            NSLog(@">>>%p_____%p", _newdata, data);
+            if ([data isEqualToData:_newdata]) {
+                
+                [self.header endRefreshing];
+                return ;
+            }
+            else{
+             
+                self.newdata = nil;
+                self.newdata = data;
+                
+                NSDictionary *responseDict = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:&error];
+                
+                NSDictionary *dataDict = responseDict[@"data"];
+
+#pragma mark -- 设置主页列表
+                
+                NSArray *listArray = dataDict[@"list"];
+                //        TXLog(@"listArray个数:%ld", [listArray count]);
+                NSMutableArray *tmpArray = [NSMutableArray array];
+                for (NSDictionary *dict in listArray) {
+                    if ([dict[@"enname"] isEqualToString:@"Music"]) {
+                        continue; // 如果是music类型跳出本次循环
+                    }
+                    TXMainViewList *txMainViewList = [TXMainViewList txMainViewListWithDictionary:dict];
+                    
+                    [tmpArray addObject:txMainViewList];
+                    
+                }
+                NSRange range = NSMakeRange(0, tmpArray.count);
+                NSIndexSet *set = [NSIndexSet indexSetWithIndexesInRange:range];
+                [self.listArray insertObjects:tmpArray atIndexes:set];
+                TXLog(@">>>>>>%ld", _listArray.count);
+                [self.tableView reloadData];
+                
+                // 让刷新控件停止显示刷新状态
+                [self.header endRefreshing];
+  
+
+            }
+            
+    }
+        else{
+            // 让刷新控件停止显示刷新状态
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                [self.header endRefreshing];
+                TXLog(@"connectionError%@", connectionError);
+                [SVProgressHUD showErrorWithStatus:@"网络繁忙, 请稍后再试" duration:1];
+                
+            });
+
+        }
+    }];// 数据请求结束
+    
+}
+
+// 上拉加载
+- (void)loadMoreData{
+
+     NSString *bodyString = [NSString stringWithFormat:@"start=%ld&client=2&limit=10", (unsigned long)_listArray.count+1];
+
+    NSMutableURLRequest *mutableRequest = [self requestWithUrl:homeUrlHead method:@"POST" bodyString:bodyString];
+    // 使用block进行网络请求
+    [NSURLConnection sendAsynchronousRequest:mutableRequest queue:[NSOperationQueue mainQueue] completionHandler:^(NSURLResponse *response, NSData *data, NSError *connectionError) {
+        if (data) {
+            // 让刷新控件停止显示刷新状态
+            NSDictionary *responseDict = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:nil];
+            //        TXLog(@"请求成功>>>>%@", responseDict[@"data"]);
+            NSDictionary *dataDict = responseDict[@"data"];
+            
+#pragma mark -- 设置主页列表
+            
+            NSArray *listArray = dataDict[@"list"];
+            //        TXLog(@"listArray个数:%ld", [listArray count]);
+            NSMutableArray *tmpArray = [NSMutableArray array];
+            for (NSDictionary *dict in listArray) {
+                if ([dict[@"enname"] isEqualToString:@"Music"]) {
+                    continue; // 如果是music类型跳出本次循环
+                }
+                TXMainViewList *txMainViewList = [TXMainViewList txMainViewListWithDictionary:dict];
+                
+                [tmpArray addObject:txMainViewList];
+                
+            }
+            // 添加新数据到旧数据后面
+            
+            [_listArray addObjectsFromArray:tmpArray];
+            TXLog(@">>>>>>%ld", _listArray.count);
+            [self.tableView reloadData];
+            
+            // 让刷新控件停止显示刷新状态
+            [self.footer endRefreshing];
+        }
+        else{
+            
+            // 让刷新控件停止显示刷新状态
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                
+                [self.footer endRefreshing];
+                TXLog(@"connectionError%@", connectionError);
+                [SVProgressHUD showErrorWithStatus:@"网络繁忙, 请稍后再试" duration:1];
+                
+            });
+            
+        }
+        
+        
+    }];// 数据请求结束
+
+    
+}
+
+#pragma mark -- 首页静静电台
+- (void)clickJingImgView:(UITapGestureRecognizer *)tapGesture{
+
+    // 暂停播放 / 当页面
+//        [[AFSoundManager sharedManager].audioP layer stop];
+//        [[AFSoundManager sharedManager].player pause];
+    
+    TXLog(@"我想静静");
+    
+    self.windows = [[UIWindow alloc] initWithFrame:CGRectMake(SCREEN_WIDTH - 50, SCREEN_HEIGHT - 50, 40, 40)];
+//    _windows.backgroundColor = [UIColor colorWithPatternImage:[UIImage resizedImageWithName:@"jingjing_bg.jpg"]];
+    _windows.backgroundColor = [UIColor clearColor];
+    UIWebView *webView = [[UIWebView alloc] initWithFrame:CGRectMake(SCREEN_WIDTH - 50, SCREEN_HEIGHT - 50, 40, 40)];
+     webView.delegate = self;
+//    http://music.douban.com/artists/player/
+//    [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"http://old.yuelvxing.com/app/fm/"]]];
+    [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"http://lebo.baidu.com/album/1637546?fr=ald_artist_title"]]];
+    webView.backgroundColor = [UIColor clearColor];
+    [_windows addSubview:webView];
+
+   
+    
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+  
+        [UIView animateWithDuration:1.0 animations:^{
+            self.windows.frame = CGRectMake(0 , 0 , SCREEN_WIDTH, SCREEN_HEIGHT);
+            webView.frame = CGRectMake(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+        
+        }completion:^(BOOL finished){
+
+            
+        }];
+    });
+    UIImageView *jingImageView = [[UIImageView alloc] initWithFrame:CGRectMake(SCREEN_WIDTH - 50, SCREEN_HEIGHT - 40, 40, 40)];
+    jingImageView.image = [UIImage imageNamed:@"ic_quiet_close"];
+    jingImageView.layer.cornerRadius = 20;
+    jingImageView.layer.masksToBounds = YES;
+    jingImageView.userInteractionEnabled = YES;
+    UITapGestureRecognizer *tapGestures = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(clickJingImgView_close:)];
+    [jingImageView addGestureRecognizer:tapGestures];
+    self.jingImageView_close = jingImageView;
+    [_windows addSubview:jingImageView];
+    [_windows bringSubviewToFront:jingImageView];
+    
+    webView.tag = 1000;
+    
+    [_windows makeKeyAndVisible];
+    
+}
+
+#pragma mark -- 关闭首页静静
+- (void)clickJingImgView_close:(UITapGestureRecognizer *)tapGesture{
+
+    TXLog(@"移除windows");
+
+    UIWebView *webView = (UIWebView *)[self.windows viewWithTag:1000];
+   
+    
+    [UIView animateWithDuration:1.0 animations:^{
+        webView.frame = CGRectMake(SCREEN_WIDTH - 25, SCREEN_HEIGHT-10, 10, 10);
+        self.windows.frame = CGRectMake(SCREEN_WIDTH - 25 , SCREEN_HEIGHT-10 , 10, 10);
+    }completion:^(BOOL finished){
+       
+        [webView removeFromSuperview];
+        [self.jingImageView_close removeFromSuperview];
+        _windows.frame = CGRectZero;
+        [_windows removeFromSuperview];
+        [_windows resignKeyWindow];
+    }];
+
+    
+}
+
+#pragma mark -- 数据请求头
+- (NSMutableURLRequest *)requestWithUrl:(NSString *)urlString method:(NSString *)method bodyString:(NSString *)bodyString{
+
+    // 1.创建URL对象
+    NSURL *url = [NSURL URLWithString:urlString];
+    
+    // 2.创建NSMutableRequest
+    NSMutableURLRequest *mutableRequest = [NSMutableURLRequest requestWithURL:url cachePolicy:NSURLRequestReturnCacheDataElseLoad timeoutInterval:30];
+    
+    // 3.设置HTTP请求类型
+    [mutableRequest setHTTPMethod:method];
+    
+    // 设置请求体
+    NSData *bodyData = [bodyString dataUsingEncoding:NSUTF8StringEncoding];
+    [mutableRequest setHTTPBody:bodyData];
+
+
+    return mutableRequest;
+}
+
+#pragma mark -- 懒加载
+- (NSMutableArray *)cycleScrollePictureUrl{
+
+    if (!_cycleScrollePictureUrl) {
+        self.cycleScrollePictureUrl = [NSMutableArray array];
+    }
+    return _cycleScrollePictureUrl;
+}
+
+- (NSMutableArray *)listArray{
+    
+    if (!_listArray) {
+        self.listArray = [NSMutableArray array];
+    }
+    return _listArray;
+}
+
+
+#pragma mark -- wabviewDelegate
+- (void)webView:(UIWebView *)webView didFailLoadWithError:(NSError *)error{
+        // 让刷新控件停止显示刷新状态
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+ 
+            [SVProgressHUD showErrorWithStatus:@"网络繁忙, 请稍后再试" duration:1.5];
+            
+        });
+        
+
+
+}
+
+- (void)didReceiveMemoryWarning {
+    [super didReceiveMemoryWarning];
+    
+}
+
+- (void)dealloc
+{
+    [self.header free];
+    [self.footer free];
+}
+
+@end

@@ -1,0 +1,203 @@
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/walkontime/!svn/ver/23/WalkOnTime/WalkOnTime/ThirdPartyLibraries/SDWebImage
+END
+MKAnnotationView+WebCache.h
+K 25
+svn:wc:ra_dav:version-url
+V 108
+/svn/walkontime/!svn/ver/23/WalkOnTime/WalkOnTime/ThirdPartyLibraries/SDWebImage/MKAnnotationView+WebCache.h
+END
+SDImageCache.h
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/svn/walkontime/!svn/ver/23/WalkOnTime/WalkOnTime/ThirdPartyLibraries/SDWebImage/SDImageCache.h
+END
+SDWebImageDecoder.h
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/svn/walkontime/!svn/ver/23/WalkOnTime/WalkOnTime/ThirdPartyLibraries/SDWebImage/SDWebImageDecoder.h
+END
+MKAnnotationView+WebCache.m
+K 25
+svn:wc:ra_dav:version-url
+V 108
+/svn/walkontime/!svn/ver/23/WalkOnTime/WalkOnTime/ThirdPartyLibraries/SDWebImage/MKAnnotationView+WebCache.m
+END
+SDImageCache.m
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/svn/walkontime/!svn/ver/23/WalkOnTime/WalkOnTime/ThirdPartyLibraries/SDWebImage/SDImageCache.m
+END
+SDWebImageDecoder.m
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/svn/walkontime/!svn/ver/23/WalkOnTime/WalkOnTime/ThirdPartyLibraries/SDWebImage/SDWebImageDecoder.m
+END
+SDWebImageManager.h
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/svn/walkontime/!svn/ver/23/WalkOnTime/WalkOnTime/ThirdPartyLibraries/SDWebImage/SDWebImageManager.h
+END
+UIButton+WebCache.h
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/svn/walkontime/!svn/ver/23/WalkOnTime/WalkOnTime/ThirdPartyLibraries/SDWebImage/UIButton+WebCache.h
+END
+SDWebImageManager.m
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/svn/walkontime/!svn/ver/23/WalkOnTime/WalkOnTime/ThirdPartyLibraries/SDWebImage/SDWebImageManager.m
+END
+SDWebImageDownloaderOperation.h
+K 25
+svn:wc:ra_dav:version-url
+V 112
+/svn/walkontime/!svn/ver/23/WalkOnTime/WalkOnTime/ThirdPartyLibraries/SDWebImage/SDWebImageDownloaderOperation.h
+END
+UIImageView+WebCache.h
+K 25
+svn:wc:ra_dav:version-url
+V 103
+/svn/walkontime/!svn/ver/23/WalkOnTime/WalkOnTime/ThirdPartyLibraries/SDWebImage/UIImageView+WebCache.h
+END
+UIImage+WebP.h
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/svn/walkontime/!svn/ver/23/WalkOnTime/WalkOnTime/ThirdPartyLibraries/SDWebImage/UIImage+WebP.h
+END
+UIButton+WebCache.m
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/svn/walkontime/!svn/ver/23/WalkOnTime/WalkOnTime/ThirdPartyLibraries/SDWebImage/UIButton+WebCache.m
+END
+SDWebImageDownloaderOperation.m
+K 25
+svn:wc:ra_dav:version-url
+V 112
+/svn/walkontime/!svn/ver/23/WalkOnTime/WalkOnTime/ThirdPartyLibraries/SDWebImage/SDWebImageDownloaderOperation.m
+END
+UIImageView+WebCache.m
+K 25
+svn:wc:ra_dav:version-url
+V 103
+/svn/walkontime/!svn/ver/23/WalkOnTime/WalkOnTime/ThirdPartyLibraries/SDWebImage/UIImageView+WebCache.m
+END
+UIImage+WebP.m
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/svn/walkontime/!svn/ver/23/WalkOnTime/WalkOnTime/ThirdPartyLibraries/SDWebImage/UIImage+WebP.m
+END
+NSData+ImageContentType.h
+K 25
+svn:wc:ra_dav:version-url
+V 106
+/svn/walkontime/!svn/ver/23/WalkOnTime/WalkOnTime/ThirdPartyLibraries/SDWebImage/NSData+ImageContentType.h
+END
+SDWebImageDownloader.h
+K 25
+svn:wc:ra_dav:version-url
+V 103
+/svn/walkontime/!svn/ver/23/WalkOnTime/WalkOnTime/ThirdPartyLibraries/SDWebImage/SDWebImageDownloader.h
+END
+UIView+WebCacheOperation.h
+K 25
+svn:wc:ra_dav:version-url
+V 107
+/svn/walkontime/!svn/ver/23/WalkOnTime/WalkOnTime/ThirdPartyLibraries/SDWebImage/UIView+WebCacheOperation.h
+END
+NSData+ImageContentType.m
+K 25
+svn:wc:ra_dav:version-url
+V 106
+/svn/walkontime/!svn/ver/23/WalkOnTime/WalkOnTime/ThirdPartyLibraries/SDWebImage/NSData+ImageContentType.m
+END
+SDWebImageDownloader.m
+K 25
+svn:wc:ra_dav:version-url
+V 103
+/svn/walkontime/!svn/ver/23/WalkOnTime/WalkOnTime/ThirdPartyLibraries/SDWebImage/SDWebImageDownloader.m
+END
+UIView+WebCacheOperation.m
+K 25
+svn:wc:ra_dav:version-url
+V 107
+/svn/walkontime/!svn/ver/23/WalkOnTime/WalkOnTime/ThirdPartyLibraries/SDWebImage/UIView+WebCacheOperation.m
+END
+UIImageView+HighlightedWebCache.h
+K 25
+svn:wc:ra_dav:version-url
+V 114
+/svn/walkontime/!svn/ver/23/WalkOnTime/WalkOnTime/ThirdPartyLibraries/SDWebImage/UIImageView+HighlightedWebCache.h
+END
+SDWebImageCompat.h
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/svn/walkontime/!svn/ver/23/WalkOnTime/WalkOnTime/ThirdPartyLibraries/SDWebImage/SDWebImageCompat.h
+END
+UIImageView+HighlightedWebCache.m
+K 25
+svn:wc:ra_dav:version-url
+V 114
+/svn/walkontime/!svn/ver/23/WalkOnTime/WalkOnTime/ThirdPartyLibraries/SDWebImage/UIImageView+HighlightedWebCache.m
+END
+UIImage+MultiFormat.h
+K 25
+svn:wc:ra_dav:version-url
+V 102
+/svn/walkontime/!svn/ver/23/WalkOnTime/WalkOnTime/ThirdPartyLibraries/SDWebImage/UIImage+MultiFormat.h
+END
+SDWebImagePrefetcher.h
+K 25
+svn:wc:ra_dav:version-url
+V 103
+/svn/walkontime/!svn/ver/23/WalkOnTime/WalkOnTime/ThirdPartyLibraries/SDWebImage/SDWebImagePrefetcher.h
+END
+SDWebImageCompat.m
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/svn/walkontime/!svn/ver/23/WalkOnTime/WalkOnTime/ThirdPartyLibraries/SDWebImage/SDWebImageCompat.m
+END
+UIImage+GIF.h
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/svn/walkontime/!svn/ver/23/WalkOnTime/WalkOnTime/ThirdPartyLibraries/SDWebImage/UIImage+GIF.h
+END
+UIImage+MultiFormat.m
+K 25
+svn:wc:ra_dav:version-url
+V 102
+/svn/walkontime/!svn/ver/23/WalkOnTime/WalkOnTime/ThirdPartyLibraries/SDWebImage/UIImage+MultiFormat.m
+END
+SDWebImagePrefetcher.m
+K 25
+svn:wc:ra_dav:version-url
+V 103
+/svn/walkontime/!svn/ver/23/WalkOnTime/WalkOnTime/ThirdPartyLibraries/SDWebImage/SDWebImagePrefetcher.m
+END
+UIImage+GIF.m
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/svn/walkontime/!svn/ver/23/WalkOnTime/WalkOnTime/ThirdPartyLibraries/SDWebImage/UIImage+GIF.m
+END
+SDWebImageOperation.h
+K 25
+svn:wc:ra_dav:version-url
+V 102
+/svn/walkontime/!svn/ver/23/WalkOnTime/WalkOnTime/ThirdPartyLibraries/SDWebImage/SDWebImageOperation.h
+END

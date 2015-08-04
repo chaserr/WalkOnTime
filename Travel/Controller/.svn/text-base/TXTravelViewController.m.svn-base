@@ -1,0 +1,283 @@
+//
+//  TXTravelViewController.m
+//  WalkOnTime
+//
+//  Created by lanou3g on 15/7/10.
+//  Copyright (c) 2015年 朝夕. All rights reserved.
+//
+
+#import "TXTravelViewController.h"
+#import "TXTravelListTableViewCell.h"
+#import "AFNetworking.h"
+#import "TXTravellistModel.h"
+#import "MJExtension.h"
+#import "Subject_collection_model.h"
+#import "SubjectsModel.h"
+#import "CollectionWithTableViewCell.h"
+#import "TXTravelDetailViewController.h"
+#import "TXDoulistsModel.h"
+#import "DataBaseHandle.h"
+@interface TXTravelViewController ()<UITableViewDelegate,UITableViewDataSource,TXTravelListTableViewCellDelegate,CollectionWithTableViewCellDelegate>
+
+@property (nonatomic, strong) NSMutableArray *traveListArray; // 大列表
+
+@property (nonatomic, strong) UITapGestureRecognizer *tapGestureWithTitle;
+
+@property (nonatomic, strong) UITapGestureRecognizer *tapGestureWithfirstImg;
+
+@property (nonatomic, strong) UITapGestureRecognizer *tapGestureWithsecondImg;
+
+@property (nonatomic, strong) UITapGestureRecognizer *tapGestureWiththirdImg;
+
+@property (nonatomic, strong) NSIndexPath *indexPathRecode; // 记录点击的cell的indexPath
+
+@property (nonatomic, strong) DataBaseHandle *databaseHandle;
+@end
+
+@implementation TXTravelViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+   
+    self.databaseHandle = [DataBaseHandle sharedDataBaseHandle];
+    
+    self.title = @"图书";
+    
+    
+    // 监测网络
+    [[AFNetworkReachabilityManager sharedManager] startMonitoring];
+    
+    // 检测网络连接的单例,网络变化时的回调方法
+    [[AFNetworkReachabilityManager sharedManager] setReachabilityStatusChangeBlock:^(AFNetworkReachabilityStatus status) {
+        if (status <= 0) {
+
+        // 从数据库加载
+            NSArray *array = [self.databaseHandle resoreTXTravellistModel];
+            self.traveListArray = [NSMutableArray arrayWithArray:array];
+            [self.tableView reloadData];
+        }else{
+            // 有网从网络加载
+
+            [self loadData];
+        }
+        
+    }];
+
+    // 布局旅行的tableView
+    [self travelTableView];
+    
+    // 布局感兴趣collectionView
+    [self groupCollectionView];
+    
+    // 布局日记
+    [self diaryLayout];
+
+}
+
+#pragma mark -- 加载数据
+- (void)loadData{
+
+    self.traveListArray = [NSMutableArray array];
+
+    
+     // 请求管理者
+     AFHTTPRequestOperationManager *manger = [AFHTTPRequestOperationManager manager];
+     // 请求参数:
+     [manger GET:reading_doubanUrl parameters:nil success:^(AFHTTPRequestOperation *operation, NSDictionary *responseObject) {
+         // 请求数据成功
+//         TXLog(@"请求的数据:%@",responseObject[@"subject_collection_boards"]);
+         NSArray *subject_collection_boardsArray = responseObject[@"subject_collection_boards"];
+         for (NSDictionary *dict in subject_collection_boardsArray) {
+
+        // 大字典
+        TXTravellistModel *txTravelListModel = [TXTravellistModel objectWithKeyValues:dict];
+        [self.traveListArray addObject:txTravelListModel];
+
+        [self.databaseHandle saveNewTXTravelListModel:txTravelListModel];
+  
+    }
+        
+    [self.traveListArray addObject:@"1"];
+      [self.tableView reloadData];
+         
+} failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+         // 请求数据失败
+         TXLog(@"错误代码:%@",error);
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        
+        //                [self.header endRefreshing];
+        //                TXLog(@"connectionError%@", connectionError);
+        [SVProgressHUD showErrorWithStatus:@"网络繁忙, 请稍后再试" duration:1];
+        
+    });
+}];
+
+}
+
+#pragma mark -- 旅行页列表
+- (void)travelTableView{
+
+    CGFloat tableX = 0;
+    CGFloat tableY = 0;
+    CGFloat tableW = SCREEN_WIDTH;
+    CGFloat tableH = SCREEN_HEIGHT-tableY;
+    
+    UITableView *tableView = [[UITableView alloc] initWithFrame:CGRectMake(tableX, tableY, tableW, tableH) style:(UITableViewStyleGrouped)];
+//    tableView.backgroundColor = [UIColor whiteColor];
+    tableView.delegate = self;
+    tableView.dataSource = self;
+    [self.view addSubview:tableView];
+    self.tableView = tableView;
+    
+    self.tableView.showsVerticalScrollIndicator = NO;
+
+    
+}
+
+#pragma mark -- tableView Delegate and Datasource
+// 分区数
+- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView{
+
+    return _traveListArray.count;
+}
+
+// 分区所在行数
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
+
+    return 1;
+}
+
+// 绘制cell
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
+
+    if (indexPath.section<5) {
+        static NSString *travelCellIdentifier = @"TravelListTableViewCell";
+        
+        TXTravelListTableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:travelCellIdentifier];
+        if (cell == nil) {
+           
+            cell = [[TXTravelListTableViewCell alloc] initWithStyle:(UITableViewCellStyleDefault) reuseIdentifier:travelCellIdentifier];
+        }
+
+        TXTravellistModel *txTravelModel = _traveListArray[indexPath.section];
+        cell.txTravellistModel = txTravelModel;
+        cell.selectionStyle = UITableViewCellSelectionStyleNone;
+        cell.delegate = self;
+
+        
+        
+        
+        return cell;
+    }
+    else{
+
+        CollectionWithTableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"CollectionWithTableViewCell"];
+        if (cell == nil) {
+            cell = [[CollectionWithTableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"CollectionWithTableViewCell"];
+
+        }
+
+        cell.delegate  = self;
+        return cell;
+    }
+    
+}
+
+// 行高
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
+  
+    if (indexPath.section == 5) {
+        return 190;
+//        TXLog(@"indexPath.section:%ld", (long)indexPath.section);
+    }
+    return 240;
+}
+
+// 分区头部高度
+- (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section{
+
+    if (section == 0) {
+        return 5;
+    }
+
+    return 10;
+}
+
+
+#pragma mark -- 旅行页小组部分
+- (void)groupCollectionView{
+ 
+}
+
+#pragma mark -- 旅行页日记部分
+- (void)diaryLayout{
+
+    
+}
+
+
+#pragma mark -- 进入详情页
+- (void)reserviceUrl:(NSString *)urlString{
+
+    TXTravelDetailViewController *txTravelDetail = [[TXTravelDetailViewController alloc] init];
+    txTravelDetail.detailWithUrl = urlString;
+//    TXNavigationController *na = [[TXNavigationController alloc] initWithRootViewController:txTravelDetail];
+//    TXLog(@">>>>>>>%@",txTravelDetail.detailWithUrl);
+    [self.navigationController pushViewController:txTravelDetail animated:YES];
+}
+
+#pragma mark --  TXTravelViewControllerCell delegate
+ // 轻拍标题
+- (void)txTravelListTableViewCellShowDetailWithTapGesture:(UITapGestureRecognizer *)tapGesture txTravellistModelWithUrl:(NSString *)urlString{
+
+    [self reserviceUrl:urlString];
+    
+//    TXLog(@"轻拍标题");
+    
+}
+
+// 轻拍第一个图片
+- (void)txTravelListTableViewCellShowDetailWithTapGesture:(UITapGestureRecognizer *)tapGesture txTravellistModelFirstImgWithUrl:(NSString *)urlString{
+    
+    [self reserviceUrl:urlString];
+    
+}
+
+// 轻拍第二个图片
+- (void)txTravelListTableViewCellShowDetailWithTapGesture:(UITapGestureRecognizer *)tapGesture txTravellistModelSecondImgWithUrl:(NSString *)urlString{
+
+    [self reserviceUrl:urlString];
+}
+// 轻拍第三个图片
+- (void)txTravelListTableViewCellShowDetailWithTapGesture:(UITapGestureRecognizer *)tapGesture txTravellistModelThirdImgWithUrl:(NSString *)urlString{
+
+    [self reserviceUrl:urlString];  
+}
+
+#pragma mark -- CollectionWithTableViewCellDelegate
+- (void)CollectionWithTableViewCellDelegate:(TXDoulistsModel *)txDoulistModel{
+
+    TXTravelDetailViewController *txTravelDetail = [[TXTravelDetailViewController alloc] init];
+    txTravelDetail.detailWithUrl = txDoulistModel.itemUrl;
+    [self.navigationController pushViewController:txTravelDetail animated:YES];
+    
+}
+
+
+// 懒加载
+- (NSMutableArray *)traveListArray{
+    
+    if (!_traveListArray) {
+        self.traveListArray = [NSMutableArray array];
+    }
+    return _traveListArray;
+}
+
+
+- (void)didReceiveMemoryWarning {
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+
+@end

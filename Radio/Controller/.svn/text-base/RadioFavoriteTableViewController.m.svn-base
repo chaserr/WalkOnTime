@@ -1,0 +1,82 @@
+//
+//  RadioFavoriteTableViewController.m
+//  WalkOnTime
+//
+//  Created by lanou3g on 15/7/23.
+//  Copyright (c) 2015年 朝夕. All rights reserved.
+//
+
+#import "RadioFavoriteTableViewController.h"
+#import "DataBaseHandle.h"
+#import "TXRadioTableViewCell.h"
+#import "TXRadioListModel.h"
+#import "WXMRadioDetailViewController.h"
+@interface RadioFavoriteTableViewController ()
+
+
+@property (nonatomic, retain) NSMutableArray *radioFavoriteArray;
+
+@property (nonatomic, strong) DataBaseHandle *databaseHandle;
+@end
+
+@implementation RadioFavoriteTableViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    
+    self.databaseHandle = [DataBaseHandle sharedDataBaseHandle];
+    
+    self.navigationItem.title = @"电台收藏";
+    
+    self.radioFavoriteArray = [NSMutableArray arrayWithArray:[self.databaseHandle selectAllTXRadioListModel]];
+    
+    [self.tableView registerClass:[TXRadioTableViewCell class] forCellReuseIdentifier:@"CollectCell"];
+    
+}
+
+#pragma mark - Table view data source
+
+- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
+    
+    return 1;
+}
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
+    return _radioFavoriteArray.count;
+}
+
+// 绘制cell
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
+   
+    TXRadioTableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"CollectCell" forIndexPath:indexPath];
+    
+    TXRadioListModel *txRadioListModel = _radioFavoriteArray[indexPath.row];
+    
+    cell.txRadioListModel = txRadioListModel;
+    
+    return cell;
+
+}
+
+// 选中cell
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
+
+    WXMRadioDetailViewController *RadioDetailView = [[WXMRadioDetailViewController alloc] init];
+
+    [RadioDetailView.button_collect setImage:[UIImage imageNamed:@"ic_heart_red"] forState:(UIControlStateNormal)];
+    TXRadioListModel *txRadioListModel = _radioFavoriteArray[indexPath.row];
+    RadioDetailView.radioId = txRadioListModel.radioid;
+    RadioDetailView.txRadioListModel = txRadioListModel;
+    RadioDetailView.title = txRadioListModel.title;
+    [self.navigationController pushViewController:RadioDetailView animated:YES];
+    
+}
+
+// 行高
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
+    return 110;
+}
+
+
+
+@end

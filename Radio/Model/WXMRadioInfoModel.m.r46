@@ -1,0 +1,32 @@
+//
+//  WXMRadioInfoModel.m
+//  WalkOnTime
+//
+//  Created by lanou3g on 15/7/15.
+//  Copyright (c) 2015年 朝夕. All rights reserved.
+//
+
+#import "WXMRadioInfoModel.h"
+
+@implementation WXMRadioInfoModel
+
+
+//- (instancetype)initWithRadioInfoDictionary:(NSDictionary *)dict{
+//    
+//    if (self = [super init]) {
+//        [self setValuesForKeysWithDictionary:dict];
+//    }
+//    return self;
+//}
+//
+//+ (instancetype)wxmRadioInfoModelWithRadioInfoDictionary:(NSDictionary *)dict{
+//    
+//    return [[self alloc] initWithRadioInfoDictionary:dict];
+//}
+//
+//
+//- (void)setValue:(id)value forUndefinedKey:(NSString *)key{
+//    
+//    
+//}
+@end

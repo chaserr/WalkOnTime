@@ -1,0 +1,93 @@
+//
+//  WXMPlayerScrollViewFirstView.m
+//  WalkOnTime
+//
+//  Created by lanou3g on 15/7/17.
+//  Copyright (c) 2015年 朝夕. All rights reserved.
+//
+
+#import "WXMPlayerScrollViewFirstView.h"
+#import "UIImageView+WebCache.h"
+#import "WXMPlayerViewController.h"
+@implementation WXMPlayerScrollViewFirstView
+
+- (instancetype)initWithFrame:(CGRect)frame{
+    if (self = [super initWithFrame:frame]) {
+        
+      //  WXMPlayerViewController *wxmPlayerViewControll = [[WXMPlayerViewController alloc] init];
+        
+        //主题图片
+        self.titleImage = [[UIImageView alloc] initWithFrame:CGRectMake(80, 80, SCREEN_WIDTH - 160, SCREEN_WIDTH - 160)];
+        _titleImage.backgroundColor = [UIColor grayColor];
+        [self addSubview:_titleImage];
+        
+        
+      //主题
+        self.titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, CGRectGetMaxY(_titleImage.frame) + 20, SCREEN_WIDTH , 30)];
+        _titleLabel.text = @"看烂片没有后悔药";
+        _titleLabel.textAlignment = NSTextAlignmentCenter;
+        [self addSubview:_titleLabel];
+        
+        //感兴趣图标
+//        self.interestImage = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"ic_comment"]];
+//        _interestImage.frame = CGRectMake(CGRectGetMinX(_titleImage.frame) + 20, CGRectGetMaxY(_titleLabel.frame) + 35, 20, 20);
+//        [self addSubview:_interestImage];
+        
+//        //感兴趣人数
+//        self.interestNumLabel = [[UILabel alloc] initWithFrame:CGRectMake(CGRectGetMaxX(_interestImage.frame) + 10, CGRectGetMinY(_interestImage.frame), 30, 20)];
+//        _interestNumLabel.text = @"123";
+//        [self addSubview:_interestNumLabel];
+//        
+//        //评论图标
+//        self.commentImage = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"ic_heart_empty"]];
+//        _commentImage.frame = CGRectMake(CGRectGetMaxX(_titleImage.frame) - 60, CGRectGetMaxY(_titleLabel.frame) + 35, 20, 27*20/33);
+//        [self addSubview:_commentImage];
+        
+        //评论人数
+//        self.commentNumLabel = [[UILabel alloc ] init];
+//        _commentNumLabel.frame = CGRectMake(CGRectGetMaxX(_commentImage.frame) + 10, CGRectGetMinY(_interestImage.frame), 30, 20);
+//       _commentNumLabel.text = @"10";
+//        [self addSubview:_commentNumLabel];
+        
+        //播放进度条
+        self.playerSlider = [[UISlider alloc] initWithFrame:CGRectMake(60, 20, SCREEN_WIDTH -  120, 5)];
+        _playerSlider.backgroundColor = [UIColor grayColor];
+        [self addSubview:_playerSlider];
+        
+        //播放时间进度显示
+        //剩余时间
+        self.timeRemaining = [[UILabel alloc] initWithFrame:CGRectMake(SCREEN_WIDTH - 50, CGRectGetMinY(_playerSlider.frame) - 10, 50, 20)];
+        _timeRemaining.font = [UIFont fontWithName:nil size:12];
+        [self addSubview:_timeRemaining];
+        
+        //过去时间
+//        self.elapsedTime = [[UILabel alloc] initWithFrame:CGRectMake(20, CGRectGetMinY(_playerSlider.frame) - 10, 50, 20)];
+//        _elapsedTime.font = [UIFont fontWithName:nil size:12];
+//        [self addSubview:_elapsedTime];
+
+    }
+
+    return self;
+
+}
+
+- (void)setWxmPlayerFirstViewModel:(WXMPlayerFirstViewModel *)wxmPlayerFirstViewModel
+{
+    _wxmPlayerFirstViewModel = wxmPlayerFirstViewModel;
+//赋值
+    [self.titleImage sd_setImageWithURL:[NSURL URLWithString:wxmPlayerFirstViewModel.playInfo.imgUrl]];
+    self.titleLabel.text = wxmPlayerFirstViewModel.playInfo.title;
+    self.interestNumLabel.text = wxmPlayerFirstViewModel.like;
+    self.commentNumLabel.text = wxmPlayerFirstViewModel.comment;
+
+
+}
+/*
+// Only override drawRect: if you perform custom drawing.
+// An empty implementation adversely affects performance during animation.
+- (void)drawRect:(CGRect)rect {
+    // Drawing code
+}
+*/
+
+@end

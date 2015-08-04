@@ -1,0 +1,181 @@
+//
+//  TXArticalDetailViewController.m
+//  WalkOnTime
+//
+//  Created by lanou3g on 15/7/13.
+//  Copyright (c) 2015年 朝夕. All rights reserved.
+//
+
+#import "TXArticalDetailViewController.h"
+#import "SVProgressHUD.h"
+#import "UMSocial.h"
+@interface TXArticalDetailViewController ()<UIWebViewDelegate,UMSocialUIDelegate>
+
+@end
+
+@implementation TXArticalDetailViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    self.view.backgroundColor = [UIColor whiteColor];
+
+    // 分享按钮
+    UIButton *leftButton = [UIButton buttonWithType:(UIButtonTypeCustom)];
+    leftButton.frame = CGRectMake(0, 0, 17, 18);
+//    leftButton.backgroundColor = [UIColor redColor];
+    [leftButton setImage:[UIImage imageNamed:@"ic_share"] forState:(UIControlStateNormal)];
+    
+    [leftButton addTarget:self action:@selector(clickShare:) forControlEvents:(UIControlEventTouchUpInside)];
+    
+//    // 收藏按钮
+//    UIButton *rightButton_collec = [UIButton buttonWithType:(UIButtonTypeCustom)];
+//    rightButton_collec.frame = CGRectMake(0, 0, 21, 17);
+//    //    leftButton.backgroundColor = [UIColor redColor];
+//    [rightButton_collec setImage:[UIImage imageNamed:@"ic_heart_withe"] forState:(UIControlStateNormal)];
+//    [rightButton_collec setImage:[UIImage imageNamed:@"ic_heart_red"] forState:(UIControlStateHighlighted)];
+//    [rightButton_collec addTarget:self action:@selector(clickCollec:) forControlEvents:(UIControlEventTouchUpInside)];
+//    
+    UIBarButtonItem *rightBtn_share = [[UIBarButtonItem alloc] initWithCustomView:leftButton];
+//    UIBarButtonItem *rightBtn_collection = [[UIBarButtonItem alloc] initWithCustomView:rightButton_collec];
+
+//    NSArray *array = @[rightBtn_share, rightBtn_collection];
+    
+//    self.navigationItem.rightBarButtonItems = @[rightBtn_share, rightBtn_collection];
+    self.navigationItem.rightBarButtonItem = rightBtn_share;
+    // 初始化webview
+    self.webView = [[UIWebView alloc] initWithFrame:self.view.frame];
+    _webView.delegate = self;
+    [self.view addSubview:_webView];
+    
+    // 数据请求
+    [self loadData];
+}
+
+
+
+- (void)loadData{
+
+    // 1.创建URL对象
+    NSURL *url = [NSURL URLWithString:readingArticalDetailUrl];
+    
+    // 2.创建NSMutableRequest
+    NSMutableURLRequest *mutableRequest = [NSMutableURLRequest requestWithURL:url];
+    
+    // 3.设置HTTP请求类型
+    [mutableRequest setHTTPMethod:@"POST"];
+    
+    // 设置请求体
+    NSString *articalDetailID = [NSString stringWithFormat:@"%@",_txReadingDetailLIstModel.itemId];
+    
+    NSString *bodyString = [NSString stringWithFormat:@"contentid=%@&client=2", articalDetailID];
+    //    TXLog(@"请求体:%@", bodyString);
+    NSData *bodyData = [bodyString dataUsingEncoding:NSUTF8StringEncoding];
+    [mutableRequest setHTTPBody:bodyData];
+    
+    // 使用block进行网络请求
+    [NSURLConnection sendAsynchronousRequest:mutableRequest queue:[NSOperationQueue mainQueue] completionHandler:^(NSURLResponse *response, NSData *data, NSError *connectionError) {
+        
+        NSDictionary *responseDict = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:nil];
+        //        TXLog(@"请求成功>>>>%@", responseDict[@"data"]);
+        NSDictionary *dataDict = responseDict[@"data"];
+        NSString *urlString = dataDict[@"html"];
+        
+        //        TXLog(@"urlString:%@",urlString);
+#pragma mark -- 加载URL
+        
+        NSURL *url = [NSURL URLWithString:urlString];
+        //        [self.webView loadHTMLString:@"<html></html>" baseURL:url];
+        [self.webView loadHTMLString:urlString baseURL:url];
+        [self.webView reload];
+        
+        
+    }];// 数据请求结束
+    
+    
+}
+
+#pragma mark-- 分享按钮
+
+- (void)clickShare:(UIBarButtonItem *)barBtn{
+#pragma mark -- 系统自带分享
+    TXLog(@"分享");
+////     判断服务是否可用
+//    if ([SLComposeViewController isAvailableForServiceType:SLServiceTypeTencentWeibo]) {
+//        
+//        TXLog(@"分享服务不可用");
+//    }
+//    // 创建分享控制器
+//    SLComposeViewController *shareVC = [SLComposeViewController composeViewControllerForServiceType:SLServiceTypeSinaWeibo ];
+//    // 设置默认发送数据
+////    shareVC setInitialText:@"刘亦菲我爱你"; // 接受来自网络要分享的内容
+////    [shareVC addImage:[UIImage imageNamed:@"sina"]];
+//    
+//    // 弹出分享控制器
+//    [self presentViewController:shareVC animated:YES completion:nil];
+//    // 监听分享状态
+//    shareVC.completionHandler = ^(SLComposeViewControllerResult result){
+//    
+//        if (result == SLComposeViewControllerResultDone) {
+//            TXLog(@"发送成功");
+//        
+//            [SVProgressHUD showSuccessWithStatus:@"分享成功"];
+//            
+//            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+//                
+//                [SVProgressHUD dismiss];
+//            });
+//            
+//        }else{
+//        
+//            TXLog(@"发送失败");
+//            
+//        }
+//        
+//    };
+    
+#pragma mark -- 友盟集成分享
+    //注意：分享到微信好友、微信朋友圈、微信收藏、QQ空间、QQ好友、来往好友、来往朋友圈、易信好友、易信朋友圈、Facebook、Twitter、Instagram等平台需要参考各自的集成方法
+    /*
+     SheetView: 需要在哪个视图中展示
+     appKey: 当前应用的友盟分享的key
+     shareText: 需要分享的文本
+     shareImage: 需要分享的图片
+     shareToSnsNames: 需要分享到的平台
+     */
+    
+     [UMSocialSnsService presentSnsIconSheetView:self
+     appKey:@"55a5ed9867e58e2bd100416e"
+     shareText:@"你要分享的文字" //通过网络请求获取分享内容
+     shareImage:[UIImage imageNamed:@"icon.png"] // 通过网络请求获取分享内容
+     shareToSnsNames:[NSArray arrayWithObjects:UMShareToSina,UMShareToTencent,UMShareToRenren, UMShareToDouban, UMShareToFacebook, UMShareToFlickr, UMShareToInstagram, nil]
+     delegate:self];
+    
+
+}
+
+#pragma mark -- 收藏功能
+- (void)clickCollec:(UIBarButtonItem *)barBtn{
+
+    TXLog(@"收藏");
+    
+    
+}
+
+// 懒加载
+- (UIWebView *)webView{
+    
+    if (!_webView) {
+        self.webView = [[UIWebView alloc] initWithFrame:self.view.frame];
+        //        self.webView.backgroundColor = [UIColor yellowColor];
+    }
+    return _webView;
+}
+
+- (void)didReceiveMemoryWarning {
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+
+
+@end

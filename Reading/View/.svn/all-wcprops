@@ -1,0 +1,53 @@
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/walkontime/!svn/ver/47/WalkOnTime/WalkOnTime/Reading/View
+END
+TXReadingDetailTableViewCell.h
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/svn/walkontime/!svn/ver/23/WalkOnTime/WalkOnTime/Reading/View/TXReadingDetailTableViewCell.h
+END
+TXReadCollectionViewCell.h
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svn/walkontime/!svn/ver/23/WalkOnTime/WalkOnTime/Reading/View/TXReadCollectionViewCell.h
+END
+TXFooterViewCollectionReusableView.h
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/svn/walkontime/!svn/ver/23/WalkOnTime/WalkOnTime/Reading/View/TXFooterViewCollectionReusableView.h
+END
+TXReadingDetailTableViewCell.m
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/svn/walkontime/!svn/ver/23/WalkOnTime/WalkOnTime/Reading/View/TXReadingDetailTableViewCell.m
+END
+TXHeadViewCollectionReusableView.h
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/svn/walkontime/!svn/ver/23/WalkOnTime/WalkOnTime/Reading/View/TXHeadViewCollectionReusableView.h
+END
+TXReadCollectionViewCell.m
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svn/walkontime/!svn/ver/47/WalkOnTime/WalkOnTime/Reading/View/TXReadCollectionViewCell.m
+END
+TXFooterViewCollectionReusableView.m
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/svn/walkontime/!svn/ver/23/WalkOnTime/WalkOnTime/Reading/View/TXFooterViewCollectionReusableView.m
+END
+TXHeadViewCollectionReusableView.m
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/svn/walkontime/!svn/ver/23/WalkOnTime/WalkOnTime/Reading/View/TXHeadViewCollectionReusableView.m
+END

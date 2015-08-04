@@ -1,0 +1,296 @@
+//
+//  TXReadingViewController.m
+//  WalkOnTime
+//
+//  Created by lanou3g on 15/7/12.
+//  Copyright (c) 2015年 朝夕. All rights reserved.
+//
+
+#import "TXReadingViewController.h"
+#import "TXReadCollectionViewCell.h"
+#import "TXReadingCollectionLayout.h"
+#import "TXHeadViewCollectionReusableView.h"
+#import "TXFooterViewCollectionReusableView.h"
+#import "SDCycleScrollView.h"
+#import "TXReadingListModel.h"
+#import "TXReadingDetailViewController.h"
+#import "DataBaseHandle.h"
+#import "AFNetworking.h"
+
+@interface TXReadingViewController ()<UICollectionViewDelegate,UICollectionViewDataSource,UICollectionViewDelegateFlowLayout,SDCycleScrollViewDelegate>
+
+
+@property (nonatomic, strong) UICollectionViewFlowLayout *flowLayout;
+@property (nonatomic, strong) NSMutableArray *cycleScrollePictureUrl; // 轮播图图片数组
+@property (nonatomic, strong) SDCycleScrollView *cycleScrollView2;
+@property (nonatomic, strong) NSMutableArray *collectionListArray;
+@property (nonatomic, strong) TXHeadViewCollectionReusableView *headerView;
+@property (nonatomic, strong) TXFooterViewCollectionReusableView *footerView;
+@property (nonatomic, strong) DataBaseHandle *dataBaseHnadle;
+@end
+
+@implementation TXReadingViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    self.title = @"阅读";
+    self.dataBaseHnadle = [DataBaseHandle sharedDataBaseHandle];
+    
+    // 监测网络
+    [[AFNetworkReachabilityManager sharedManager] startMonitoring];
+    
+    // 检测网络连接的单例,网络变化时的回调方法
+    [[AFNetworkReachabilityManager sharedManager] setReachabilityStatusChangeBlock:^(AFNetworkReachabilityStatus status) {
+        //        NSLog(@"%ld", status);
+        if (status <= 0) {
+            // 从数据库加载
+            NSArray *array = [self.dataBaseHnadle resoreTXReadingListModel];
+            self.collectionListArray = [NSMutableArray arrayWithArray:array];
+            [self.collectionView reloadData];
+
+        }else{
+            // 有网从网络加载;
+            [self loadData];
+        }
+    }];
+    // 布局collectionView
+    [self layoutCollectionView];
+    
+
+    
+
+}
+
+
+#pragma mark -- 布局CollectionView
+- (void)layoutCollectionView{
+    
+    // 使用系统提供的网络布局
+    UICollectionViewFlowLayout *flowLayout = [[UICollectionViewFlowLayout alloc] init];
+//    TXReadingCollectionLayout *flowLayout = [[TXReadingCollectionLayout alloc] init];
+
+    // 创建一个UIcollectionView对象
+    self.collectionView = [[UICollectionView alloc] initWithFrame:CGRectMake(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT-65) collectionViewLayout:flowLayout];
+    _collectionView.contentSize = CGSizeMake(SCREEN_WIDTH, SCREEN_HEIGHT);
+    _collectionView.backgroundColor = [UIColor whiteColor];
+    self.flowLayout = flowLayout;
+    // 设置代理
+    _collectionView.delegate = self;
+    _collectionView.dataSource = self;
+    // 注册可重用标识
+    [_collectionView registerClass:[TXReadCollectionViewCell class] forCellWithReuseIdentifier:@"TXReadCollectionViewCell"];
+    
+#pragma mark -- 自定义布局
+
+    flowLayout.itemSize = CGSizeMake((SCREEN_WIDTH - 20)/ 3, (SCREEN_WIDTH - 20)/ 3);
+    flowLayout.minimumLineSpacing = 5;
+    flowLayout.minimumInteritemSpacing = 5;
+    // 设置item距离分区边界的位置
+    flowLayout.sectionInset = UIEdgeInsetsMake(5, 2, 5, 5);
+//    TXLog(@"水平间距%f", flowLayout.minimumInteritemSpacing);
+
+    // 设置是否显示滚动条
+    _collectionView.showsVerticalScrollIndicator = NO;
+
+    // 设置页眉和页脚大小
+    flowLayout.headerReferenceSize = CGSizeMake(SCREEN_WIDTH, 170);
+    flowLayout.footerReferenceSize = CGSizeMake(SCREEN_WIDTH, 120);
+    
+    // 注册头部视图
+    [_collectionView registerClass:[TXHeadViewCollectionReusableView class] forSupplementaryViewOfKind:UICollectionElementKindSectionHeader withReuseIdentifier:@"TXHeadViewCollectionReusableView"];
+    
+    // 注册尾部视图
+    [_collectionView registerClass:[TXFooterViewCollectionReusableView class] forSupplementaryViewOfKind:UICollectionElementKindSectionFooter withReuseIdentifier:@"TXFooterViewCollectionReusableView"];
+
+    [self.view addSubview:_collectionView];
+    
+}
+
+#pragma mark -- 数据请求
+- (void)loadData{
+
+    self.cycleScrollePictureUrl = [NSMutableArray array]; // 使用懒加载
+    
+    
+    // 1.创建URL对象
+    NSURL *url = [NSURL URLWithString:readingUrl];
+    
+    // 2.创建NSMutableRequest
+    NSMutableURLRequest *mutableRequest = [NSMutableURLRequest requestWithURL:url];
+    
+    // 3.设置HTTP请求类型
+    [mutableRequest setHTTPMethod:@"POST"];
+    
+    // 设置请求体
+    NSString *bodyString = @"client=2";
+    NSData *bodyData = [bodyString dataUsingEncoding:NSUTF8StringEncoding];
+    [mutableRequest setHTTPBody:bodyData];
+    
+    // 使用block进行网络请求
+    [NSURLConnection sendAsynchronousRequest:mutableRequest queue:[NSOperationQueue mainQueue] completionHandler:^(NSURLResponse *response, NSData *data, NSError *connectionError) {
+        if (data ) {
+            NSDictionary *responseDict = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:nil];
+            //  TXLog(@"请求成功>>>>%@", responseDict[@"data"]);
+            NSDictionary *dataDict = responseDict[@"data"];
+            NSArray *carouselArray = dataDict[@"carousel"];
+            
+            // 遍历轮播图片
+            for (NSDictionary *dict in carouselArray) {
+                [self.cycleScrollePictureUrl addObject:dict[@"img"]];
+                //              TXLog(@"图片Url:%@",_cycleScrollePictureUrl);
+            }
+            
+            
+            
+#pragma mark -- 设置主页列表
+            
+            self.collectionListArray = [NSMutableArray array];
+            
+            NSArray *listArray = dataDict[@"list"];
+            //        TXLog(@"listArray个数:%ld", [listArray count]);
+            
+            for (NSDictionary *dict in listArray) {
+                //            if ([dict[@"enname"] isEqualToString:@"Music"]) {
+                //                continue; // 如果是music类型跳出本次循环
+                //            }
+                TXReadingListModel *txReadingListModel = [TXReadingListModel txReadingListWithDictionary:dict];
+                
+                [_collectionListArray addObject:txReadingListModel];
+                
+                [self.dataBaseHnadle saveNewTXReadingListModel:txReadingListModel];
+                
+                
+            }
+#warning 在数据请求下来后一定要进行数据刷新
+            
+            [self.collectionView reloadData];
+        }
+   
+        
+        else{
+            
+            // 让刷新控件停止显示刷新状态
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                
+//                [self.header endRefreshing];
+                TXLog(@"connectionError%@", connectionError);
+                [SVProgressHUD showErrorWithStatus:@"网络繁忙, 请稍后再试" duration:1];
+                
+            });
+            
+        }
+    }];
+    // 数据请求结束
+    
+}
+
+
+#pragma mark -- readingOfCyclePic
+- (void)cyclePicture_reading{
+    
+NSArray *titles = @[@"行走·时光",
+                    @"世界那么大,我们都想去看看",
+                    @"带着心",
+                    @"享受行走",
+                    @"享受时光",
+                    @"让我们一起"
+                    ];
+//    TXLog(@"----->%@",_cycleScrollePictureUrl);
+CGFloat w = self.view.bounds.size.width;
+//网络加载 --- 创建带标题的图片轮播器
+
+self.cycleScrollView2 = [SDCycleScrollView cycleScrollViewWithFrame:CGRectMake(0, 0, w, 170) imageURLStringsGroup:_cycleScrollePictureUrl]; // 模拟网络延时情景
+    _cycleScrollView2.pageControlAliment = SDCycleScrollViewPageContolAlimentRight;
+    _cycleScrollView2.delegate = self;
+    _cycleScrollView2.titlesGroup = titles;
+    _cycleScrollView2.dotColor = [UIColor whiteColor]; // 自定义分页控件小圆标颜色
+    _cycleScrollView2.placeholderImage = [UIImage imageNamed:@"placeholder"];
+//         --- 轮播时间间隔，默认1.0秒，可自定义
+    _cycleScrollView2.autoScrollTimeInterval = 3.0;
+    
+
+
+}
+
+#pragma mark -- collection dalegate and datasource
+// 设置collection分区
+- (NSInteger)numberOfSectionsInCollectionView:(UICollectionView *)collectionView{
+    
+    return 1;
+}
+
+// 设置item
+- (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section{
+    
+        return _collectionListArray.count;
+
+}
+
+// 绘制cell
+- (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath{
+    
+    TXReadCollectionViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"TXReadCollectionViewCell" forIndexPath:indexPath];
+    
+    // 设置数据
+    TXReadingListModel *txReadingListModel = _collectionListArray[indexPath.item];
+    
+    cell.txReadingListModel = txReadingListModel;
+    
+//    cell.titleLabel.text = @"刘亦菲我喜欢你";
+
+    
+    return cell;
+}
+
+// 设置分区头尾
+- (UICollectionReusableView *)collectionView:(UICollectionView *)collectionView viewForSupplementaryElementOfKind:(NSString *)kind atIndexPath:(NSIndexPath *)indexPath{
+
+    if ([kind isEqualToString:UICollectionElementKindSectionHeader]) {
+        self.headerView = [collectionView dequeueReusableSupplementaryViewOfKind:UICollectionElementKindSectionHeader withReuseIdentifier:@"TXHeadViewCollectionReusableView" forIndexPath:indexPath];
+        _headerView.backgroundColor = [UIColor greenColor];
+
+ #pragma mark -- 设置顶部轮播图
+        [self cyclePicture_reading];
+
+        [_headerView addSubview:_cycleScrollView2];
+
+        return _headerView;
+    }
+    else{
+    
+       self.footerView = [collectionView dequeueReusableSupplementaryViewOfKind:UICollectionElementKindSectionFooter withReuseIdentifier:@"TXFooterViewCollectionReusableView" forIndexPath:indexPath];
+        
+        _footerView.footerImgView.image = [UIImage imageNamed:@"ic_latest_write"];
+
+        return _footerView;
+        
+    }
+}
+
+// 设置选中cell
+- (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath{
+    
+//    TXLog(@"点击了cell");
+    TXReadingDetailViewController *txReadingDetailVC = [[TXReadingDetailViewController alloc] init];
+    TXReadingListModel *txReadingListModel = _collectionListArray[indexPath.item];
+    txReadingDetailVC.txReadingListModel = txReadingListModel;
+    [self.navigationController pushViewController:txReadingDetailVC animated:YES];
+}
+
+#pragma mark - SDCycleScrollViewDelegate 点击图片进入相应的详情页
+- (void)cycleScrollView:(SDCycleScrollView *)cycleScrollView didSelectItemAtIndex:(NSInteger)index
+#warning 点击轮播图进入首页
+{
+    TXLog(@"---点击了第%ld张图片", (long)index);
+}
+
+
+
+- (void)didReceiveMemoryWarning {
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+
+
+@end
